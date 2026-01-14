@@ -10,6 +10,49 @@ LLM instructions for maintaining code quality and consistency.
 - **Modular Architecture**: Keep modules loosely coupled with clear boundaries and single responsibilities
 - **Extensibility**: Design for extension without modification of core code
 
+### Configuration Management
+
+Centralize configuration processing in a dedicated module that handles defaults, merging, and validation.
+
+#### Structure
+
+- **Single Entry Point**: Provide one `process_config(path)` function as the public API
+- **Defaults File**: Store default values in a separate YAML file (e.g., `config_defaults.yaml`)
+- **Deep Merge**: Merge user configuration over defaults recursively, preserving nested structures
+- **Complete Configuration Contract**: Downstream code receives a fully validated, merged configuration—it should never handle defaults, merging, or validation
+
+```python
+def deep_merge(base: Dict, override: Dict) -> Dict:
+    """Deep merge with override values taking precedence."""
+    result = copy.deepcopy(base)
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = copy.deepcopy(value)
+    return result
+```
+
+#### Validation
+
+- **Fail Early**: Validate configuration immediately after loading, before any processing
+- **Descriptive Errors**: Include expected values and context in validation messages
+
+```python
+raise ValueError(
+    f"Unexpected parameters for {backend}.{section}.{function_name}: "
+    f"{sorted(extra_params)}. Expected: {sorted(expected_params)}"
+)
+```
+
+#### Schema Extraction
+
+- **Derive from Defaults**: Extract parameter schemas from the defaults file rather than duplicating definitions
+
+#### Extensibility
+
+- **Skip Validation for Custom Functions**: When users register custom functions, bypass strict parameter validation
+
 ### Documentation Philosophy
 
 - Document **why** something exists, not merely what it does
