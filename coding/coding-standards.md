@@ -1,4 +1,4 @@
- Coding Standards
+# Coding Standards
 
 LLM instructions for maintaining code quality and consistency.
 
